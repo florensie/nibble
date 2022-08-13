@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "nibble",
+  "version": "${version}",
+
+  "name": "Nibble",
+  "description": "Allows eating part of a food item.",
+  "authors": ["Florens"],
+  "contact": {
+    "homepage": "https://www.curseforge.com/minecraft/mc-mods/nibble",
+    "issues": "https://github.com/florensie/nibble/issues",
+    "sources": "https://github.com/florensie/nibble"
+  },
+
+  "license": "LGPL-3.0-or-later",
+  "icon": "assets/nibble/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "be.florens.nibble.Nibble"
+    ]
+  },
+  "mixins": [
+    "nibble.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.14.6",
+    "fabric": "*",
+    "minecraft": "~1.19",
+    "java": ">=17"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}
