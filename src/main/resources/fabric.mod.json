@@ -24,14 +24,16 @@
   "mixins": [
     "nibble.mixins.json"
   ],
+  "custom": {
+    "loom:injected_interfaces": {
+      "net/minecraft/class_1702": ["be/florens/nibble/extension/FoodDataExtension"]
+    }
+  },
 
   "depends": {
     "fabricloader": ">=0.14.6",
     "fabric": "*",
     "minecraft": "~1.19",
     "java": ">=17"
-  },
-  "suggests": {
-    "another-mod": "*"
   }
 }
