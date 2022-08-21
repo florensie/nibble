@@ -1,5 +1,6 @@
 package be.florens.nibble.mixin;
 
+import be.florens.nibble.Nibble;
 import be.florens.nibble.extension.ItemStackExtension;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.minecraft.nbt.CompoundTag;
@@ -7,6 +8,7 @@ import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -21,14 +23,19 @@ import java.util.Objects;
 public abstract class ItemStackMixin implements ItemStackExtension {
 
     @Unique private int nutritionRemaining;
+    @Unique private boolean originalUseDuration;
 
     @Shadow public abstract boolean isEdible();
     @Shadow public abstract Item getItem();
 
+    @Shadow @Final @Deprecated private Item item;
+
+    @Shadow public abstract int getUseDuration();
+
     @Unique
     @Override
     public int nibble$getNutritionRemaining() {
-        return this.isEdible() ? 0 : nutritionRemaining;
+        return this.isEdible() ? nutritionRemaining : 0;
     }
 
     @Unique
@@ -45,7 +52,7 @@ public abstract class ItemStackMixin implements ItemStackExtension {
         }
 
         FoodProperties foodProperties = Objects.requireNonNull(this.getItem().getFoodProperties());
-        return nutritionRemaining / foodProperties.getNutrition() * 13;
+        return (int)((float) nutritionRemaining / foodProperties.getNutrition()) * 13;
     }
 
     @Unique
@@ -65,13 +72,23 @@ public abstract class ItemStackMixin implements ItemStackExtension {
         }
     }
 
+    @Unique
+    @Override
+    // TODO: we might not need this anymore
+    public int nibble$getOriginalUseDuration() {
+        this.originalUseDuration = true;
+        return this.getUseDuration();
+    }
+
     @ModifyReturnValue(method = "getUseDuration", at = @At("RETURN"))
     private int adjustUseDurationForNibbled(int useDuration) {
-        if (this.isEdible()) {
+        if (this.originalUseDuration) {
+            this.originalUseDuration = false;
+        } else if(this.isEdible()) {
             FoodProperties foodProperties = Objects.requireNonNull(this.getItem().getFoodProperties());
 
             if (nutritionRemaining == 0) {
-                throw new RuntimeException("NutritionRemaining was never (re)set!");
+                Nibble.LOGGER.error("NutritionRemaining was never (re)set!");
             }
 
             useDuration /= (double) nutritionRemaining / foodProperties.getNutrition();
@@ -82,15 +99,15 @@ public abstract class ItemStackMixin implements ItemStackExtension {
 
     @Inject(method = "<init>(Lnet/minecraft/world/level/ItemLike;I)V", at = @At("RETURN"))
     private void initNutritionRemaining(ItemLike itemLike, int i, CallbackInfo ci) {
-        if (this.isEdible()) {
-            FoodProperties foodProperties = Objects.requireNonNull(this.getItem().getFoodProperties());
+        if (this.item != null && this.item.isEdible()) {
+            FoodProperties foodProperties = Objects.requireNonNull(this.item.getFoodProperties());
             this.nutritionRemaining = foodProperties.getNutrition();
         }
     }
 
     @Inject(method = "<init>(Lnet/minecraft/nbt/CompoundTag;)V", at = @At("RETURN"))
     private void initNutritionRemaining(CompoundTag compoundTag, CallbackInfo ci) {
-        if (this.isEdible()) {
+        if (this.item != null && this.item.isEdible()) {
             this.nutritionRemaining = compoundTag.getInt("NutritionRemaining");
         }
     }

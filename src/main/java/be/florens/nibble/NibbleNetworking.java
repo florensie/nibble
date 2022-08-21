@@ -23,7 +23,6 @@ public class NibbleNetworking implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(NibbleNetworking.NIBBLE_PACKET_ID, NibbleNetworking::receiveNibblePacket);
     }
 
-    @Environment(EnvType.SERVER)
     public static void sendNibblePacket(ServerPlayer player, int nutrition) {
         FriendlyByteBuf byteBuf = PacketByteBufs.create();
         byteBuf.writeInt(nutrition);

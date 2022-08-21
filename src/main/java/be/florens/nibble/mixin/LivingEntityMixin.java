@@ -9,6 +9,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -20,8 +21,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class LivingEntityMixin extends Entity {
 
     @Unique private int appliedNutrition;
+    @Unique private float nutritionPerTick;
 
     @Shadow public abstract int getUseItemRemainingTicks();
+
+    @Shadow protected ItemStack useItem;
 
     public LivingEntityMixin(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -29,23 +33,14 @@ public abstract class LivingEntityMixin extends Entity {
 
     @Inject(method = "updateUsingItem", at = @At("HEAD"))
     public void doFoodNibbling(ItemStack itemStack, CallbackInfo ci) {
-        LivingEntity self = (LivingEntity) (Object) this;
-        itemStack.onUseTick(this.level, self, this.getUseItemRemainingTicks());
-
-        if (!getLevel().isClientSide() && self instanceof ServerPlayer player && itemStack.isEdible()) {
-            // TODO: is there a better way to write this algorithm?
-            // FIXME: useDuration shrinks while eating, causing nutritionPerTick to shrink while eating
-            float nutritionPerTick = (float) itemStack.nibble$getNutritionRemaining() / itemStack.getUseDuration();
-            int elapsedUseTicks = itemStack.getUseDuration() - this.getUseItemRemainingTicks() + 1;
+        //noinspection ConstantConditions
+        if (!getLevel().isClientSide() && (Object) this instanceof ServerPlayer player && itemStack.isEdible()) {
+            int elapsedUseTicks = itemStack.nibble$getOriginalUseDuration() - this.getUseItemRemainingTicks() + 1;
             int nutrition = (int) (nutritionPerTick * elapsedUseTicks) - appliedNutrition;
             if (nutrition > 0) {
                 player.getFoodData().nibble$eatOnlyNutrition(nutrition);
                 appliedNutrition += nutrition;
                 itemStack.nibble$shrinkNutritionRemaining(nutrition);
-
-                FriendlyByteBuf byteBuf = PacketByteBufs.create();
-                byteBuf.writeInt(nutrition); // nutrition
-                byteBuf.writeInt(0); // saturation
                 NibbleNetworking.sendNibblePacket(player, nutrition);
             }
         }
@@ -54,6 +49,12 @@ public abstract class LivingEntityMixin extends Entity {
     @Inject(method = "updateUsingItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;completeUsingItem()V"))
     private void resetFoodNutritionOnComplete(ItemStack stack, CallbackInfo ci) {
         stack.nibble$resetNutritionRemaining();
+    }
+
+    @Inject(method = "startUsingItem", at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, shift = At.Shift.AFTER,
+            target = "Lnet/minecraft/world/entity/LivingEntity;useItem:Lnet/minecraft/world/item/ItemStack;"))
+    public void setNutritionPerTick(CallbackInfo ci) {
+        this.nutritionPerTick = (float) this.useItem.nibble$getNutritionRemaining() / this.useItem.nibble$getOriginalUseDuration();
     }
 
     @Inject(method = "stopUsingItem", at = @At("HEAD"))

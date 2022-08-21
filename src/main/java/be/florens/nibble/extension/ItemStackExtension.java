@@ -1,5 +1,7 @@
 package be.florens.nibble.extension;
 
+import org.spongepowered.asm.mixin.Unique;
+
 public interface ItemStackExtension {
 
     default int nibble$getNutritionRemaining() {
@@ -19,6 +21,10 @@ public interface ItemStackExtension {
     }
 
     default void nibble$shrinkNutritionRemaining(int nutrition) {
+        throw new IllegalStateException("Extension not implemented by mixin");
+    }
+
+    default int nibble$getOriginalUseDuration() {
         throw new IllegalStateException("Extension not implemented by mixin");
     }
 }
