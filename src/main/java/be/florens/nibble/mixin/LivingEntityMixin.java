@@ -4,48 +4,28 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.gameevent.GameEvent;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-
-import java.util.Objects;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin extends Entity {
-
-    @Shadow protected int useItemRemaining;
 
     @Unique private int appliedNutrition;
 
     @Shadow public abstract int getUseItemRemainingTicks();
 
-    @Shadow protected abstract boolean shouldTriggerItemUseEffects();
-
-    @Shadow protected abstract void triggerItemUseEffects(ItemStack itemStack, int i);
-
-    @Shadow protected abstract void completeUsingItem();
-
-    @Shadow protected abstract void setLivingEntityFlag(int i, boolean bl);
-
-    @Shadow public abstract boolean isUsingItem();
-
-    @Shadow protected ItemStack useItem;
-
     public LivingEntityMixin(EntityType<?> entityType, Level level) {
         super(entityType, level);
     }
 
-    /**
-     * @author Florens
-     * @reason Testing
-     */
-    @Overwrite
-    public void updateUsingItem(ItemStack itemStack) {
+    @Inject(method = "updateUsingItem", at = @At("HEAD"))
+    public void doFoodNibbling(ItemStack itemStack, CallbackInfo ci) {
         LivingEntity self = (LivingEntity) (Object) this;
         itemStack.onUseTick(this.level, self, this.getUseItemRemainingTicks());
 
@@ -62,33 +42,15 @@ public abstract class LivingEntityMixin extends Entity {
                 itemStack.nibble$shrinkNutritionRemaining(nutrition);
             }
         }
-
-        if (this.shouldTriggerItemUseEffects()) {
-            this.triggerItemUseEffects(itemStack, 5);
-        }
-
-        if (--this.useItemRemaining == 0 && !this.level.isClientSide && !itemStack.useOnRelease()) {
-            this.completeUsingItem();
-            itemStack.nibble$resetNutritionRemaining();
-        }
     }
 
-    /**
-     * @author Florens
-     * @reason Testing
-     */
-    @Overwrite
-    public void stopUsingItem() {
-        if (!this.level.isClientSide) {
-            boolean bl = this.isUsingItem();
-            this.setLivingEntityFlag(1, false);
-            if (bl) {
-                this.gameEvent(GameEvent.ITEM_INTERACT_FINISH);
-            }
-        }
+    @Inject(method = "updateUsingItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;completeUsingItem()V"))
+    private void resetFoodNutritionOnComplete(ItemStack stack, CallbackInfo ci) {
+        stack.nibble$resetNutritionRemaining();
+    }
 
-        this.useItem = ItemStack.EMPTY;
-        this.useItemRemaining = 0;
+    @Inject(method = "stopUsingItem", at = @At("HEAD"))
+    public void resetAppliedNutrition(CallbackInfo ci) {
         this.appliedNutrition = 0;
     }
 }

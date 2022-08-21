@@ -70,11 +70,11 @@ public abstract class ItemStackMixin implements ItemStackExtension {
         if (this.isEdible()) {
             FoodProperties foodProperties = Objects.requireNonNull(this.getItem().getFoodProperties());
 
-            if (nutritionRemaining != 0) {
-                useDuration /= (double) nutritionRemaining / foodProperties.getNutrition();
-            } else {
+            if (nutritionRemaining == 0) {
                 throw new RuntimeException("NutritionRemaining was never (re)set!");
             }
+
+            useDuration /= (double) nutritionRemaining / foodProperties.getNutrition();
         }
 
         return useDuration;
