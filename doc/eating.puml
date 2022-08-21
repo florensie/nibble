@@ -38,7 +38,7 @@ loop while using item
     note over ServerPlayer, ClientPlayer: Trigger sounds etc
     ServerPlayer -> ServerPlayer: Increment nutrition
     ServerPlayer -> FoodData: eat
-    ServerPlayer -> ClientPlayer: FoodDataPacket(nutrition, saturation)
+    ServerPlayer -> ClientPlayer: FoodDataPacket(nutrition)
     group update on client:
         ClientPlayer -> ClientPlayer: Update FoodData
         ClientPlayer -> FoodData: eat
@@ -53,10 +53,14 @@ loop while using item
             ClientPlayer -> ClientPlayer: completeUsingItem
             ClientPlayer -> ItemStack: finishUsingItem
             ItemStack -> Item: finishUsingItem
+            Item -> ClientPlayer: eat
+            ClientPlayer -> FoodData: eatOnlySaturation
         end
 
         ServerPlayer -> ItemStack: finishUsingItem
         ItemStack -> Item: finishUsingItem
+        Item -> ServerPlayer: eat
+        ServerPlayer -> FoodData: eatOnlySaturation
     end
 end
 

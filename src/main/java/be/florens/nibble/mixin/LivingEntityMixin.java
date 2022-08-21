@@ -1,9 +1,12 @@
 package be.florens.nibble.mixin;
 
+import be.florens.nibble.NibbleNetworking;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
@@ -29,8 +32,7 @@ public abstract class LivingEntityMixin extends Entity {
         LivingEntity self = (LivingEntity) (Object) this;
         itemStack.onUseTick(this.level, self, this.getUseItemRemainingTicks());
 
-        // TODO: server/client split?
-        if (self instanceof Player player && itemStack.isEdible()) {
+        if (!getLevel().isClientSide() && self instanceof ServerPlayer player && itemStack.isEdible()) {
             // TODO: is there a better way to write this algorithm?
             // FIXME: useDuration shrinks while eating, causing nutritionPerTick to shrink while eating
             float nutritionPerTick = (float) itemStack.nibble$getNutritionRemaining() / itemStack.getUseDuration();
@@ -40,6 +42,11 @@ public abstract class LivingEntityMixin extends Entity {
                 player.getFoodData().nibble$eatOnlyNutrition(nutrition);
                 appliedNutrition += nutrition;
                 itemStack.nibble$shrinkNutritionRemaining(nutrition);
+
+                FriendlyByteBuf byteBuf = PacketByteBufs.create();
+                byteBuf.writeInt(nutrition); // nutrition
+                byteBuf.writeInt(0); // saturation
+                NibbleNetworking.sendNibblePacket(player, nutrition);
             }
         }
     }

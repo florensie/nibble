@@ -18,7 +18,10 @@
   "environment": "*",
   "entrypoints": {
     "main": ["be.florens.nibble.Nibble"],
-    "preLaunch": ["be.florens.nibble.NibblePreLaunch"]
+    "preLaunch": ["be.florens.nibble.NibblePreLaunch"],
+    "client": [
+      "be.florens.nibble.NibbleNetworking"
+    ]
   },
   "mixins": [
     "nibble.mixins.json"
