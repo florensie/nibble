@@ -22,6 +22,7 @@ public abstract class LivingEntityMixin extends Entity {
 
     @Unique private int appliedNutrition;
     @Unique private float nutritionPerTick;
+    @Unique private int useDuration;
 
     @Shadow public abstract int getUseItemRemainingTicks();
 
@@ -35,11 +36,11 @@ public abstract class LivingEntityMixin extends Entity {
     public void doFoodNibbling(ItemStack itemStack, CallbackInfo ci) {
         //noinspection ConstantConditions
         if (!getLevel().isClientSide() && (Object) this instanceof ServerPlayer player && itemStack.isEdible()) {
-            int elapsedUseTicks = itemStack.nibble$getOriginalUseDuration() - this.getUseItemRemainingTicks() + 1;
-            int nutrition = (int) (nutritionPerTick * elapsedUseTicks) - appliedNutrition;
+            int elapsedUseTicks = this.useDuration - this.getUseItemRemainingTicks() + 1;
+            int nutrition = (int) (this.nutritionPerTick * elapsedUseTicks) - this.appliedNutrition;
             if (nutrition > 0) {
                 player.getFoodData().nibble$eatOnlyNutrition(nutrition);
-                appliedNutrition += nutrition;
+                this.appliedNutrition += nutrition;
                 itemStack.nibble$shrinkNutritionRemaining(nutrition);
                 NibbleNetworking.sendNibblePacket(player, nutrition);
             }
@@ -54,7 +55,8 @@ public abstract class LivingEntityMixin extends Entity {
     @Inject(method = "startUsingItem", at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, shift = At.Shift.AFTER,
             target = "Lnet/minecraft/world/entity/LivingEntity;useItem:Lnet/minecraft/world/item/ItemStack;"))
     public void setNutritionPerTick(CallbackInfo ci) {
-        this.nutritionPerTick = (float) this.useItem.nibble$getNutritionRemaining() / this.useItem.nibble$getOriginalUseDuration();
+        this.nutritionPerTick = (float) this.useItem.nibble$getNutritionRemaining() / this.useItem.getUseDuration();
+        this.useDuration = this.useItem.getUseDuration();
     }
 
     @Inject(method = "stopUsingItem", at = @At("HEAD"))

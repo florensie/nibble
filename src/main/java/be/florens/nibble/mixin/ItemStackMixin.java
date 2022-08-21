@@ -86,12 +86,7 @@ public abstract class ItemStackMixin implements ItemStackExtension {
             this.originalUseDuration = false;
         } else if(this.isEdible()) {
             FoodProperties foodProperties = Objects.requireNonNull(this.getItem().getFoodProperties());
-
-            if (nutritionRemaining == 0) {
-                Nibble.LOGGER.error("NutritionRemaining was never (re)set!");
-            }
-
-            useDuration /= (double) nutritionRemaining / foodProperties.getNutrition();
+            useDuration *= (double) nutritionRemaining / foodProperties.getNutrition();
         }
 
         return useDuration;
