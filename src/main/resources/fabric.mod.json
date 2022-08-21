@@ -17,16 +17,16 @@
 
   "environment": "*",
   "entrypoints": {
-    "main": [
-      "be.florens.nibble.Nibble"
-    ]
+    "main": ["be.florens.nibble.Nibble"],
+    "preLaunch": ["be.florens.nibble.NibblePreLaunch"]
   },
   "mixins": [
     "nibble.mixins.json"
   ],
   "custom": {
     "loom:injected_interfaces": {
-      "net/minecraft/class_1702": ["be/florens/nibble/extension/FoodDataExtension"]
+      "net/minecraft/class_1702": ["be/florens/nibble/extension/FoodDataExtension"],
+      "net/minecraft/class_1799": ["be/florens/nibble/extension/ItemStackExtension"]
     }
   },
 

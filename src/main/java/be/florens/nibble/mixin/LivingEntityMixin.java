@@ -51,17 +51,15 @@ public abstract class LivingEntityMixin extends Entity {
 
         // TODO: server/client split?
         if (self instanceof Player player && itemStack.isEdible()) {
-            FoodProperties foodProperties = Objects.requireNonNull(itemStack.getItem().getFoodProperties(),
-                    "Edible item should always have FoodProperties");
-
-            // TODO: saturation very unbalanced
             // TODO: is there a better way to write this algorithm?
-            float nutritionPerTick = (float) foodProperties.getNutrition() / itemStack.getUseDuration();
+            // FIXME: useDuration shrinks while eating, causing nutritionPerTick to shrink while eating
+            float nutritionPerTick = (float) itemStack.nibble$getNutritionRemaining() / itemStack.getUseDuration();
             int elapsedUseTicks = itemStack.getUseDuration() - this.getUseItemRemainingTicks() + 1;
             int nutrition = (int) (nutritionPerTick * elapsedUseTicks) - appliedNutrition;
             if (nutrition > 0) {
-                player.getFoodData().eatOnlyNutrition(nutrition);
+                player.getFoodData().nibble$eatOnlyNutrition(nutrition);
                 appliedNutrition += nutrition;
+                itemStack.nibble$shrinkNutritionRemaining(nutrition);
             }
         }
 
@@ -71,6 +69,7 @@ public abstract class LivingEntityMixin extends Entity {
 
         if (--this.useItemRemaining == 0 && !this.level.isClientSide && !itemStack.useOnRelease()) {
             this.completeUsingItem();
+            itemStack.nibble$resetNutritionRemaining();
         }
     }
 

@@ -1,0 +1,63 @@
+@startuml
+
+title Eating in vanilla
+autonumber
+
+actor ServerPlayer
+actor ClientPlayer
+participant FoodData
+participant ItemStack
+participant Item
+
+loop while using item
+    note over ServerPlayer, ClientPlayer: Trigger sounds etc
+
+    opt useItemRemaining == 0 && serverSide
+        ServerPlayer -> ServerPlayer: completeUsingItem
+        ServerPlayer -> ClientPlayer: send(ClientboundEntityEventPacket)
+
+        group finish on client
+            ClientPlayer -> ClientPlayer: completeUsingItem
+            ClientPlayer -> ItemStack: finishUsingItem
+            ItemStack -> Item: finishUsingItem
+            Item -> ClientPlayer: eat
+            ClientPlayer -> FoodData: eat
+        end
+
+        ServerPlayer -> ItemStack: finishUsingItem
+        ItemStack -> Item: finishUsingItem
+        Item -> ServerPlayer: eat
+        ServerPlayer -> FoodData: eat
+    end
+end
+
+newpage Eating with Nibble
+autonumber
+
+loop while using item
+    note over ServerPlayer, ClientPlayer: Trigger sounds etc
+    ServerPlayer -> ServerPlayer: Increment nutrition
+    ServerPlayer -> FoodData: eat
+    ServerPlayer -> ClientPlayer: FoodDataPacket(nutrition, saturation)
+    group update on client:
+        ClientPlayer -> ClientPlayer: Update FoodData
+        ClientPlayer -> FoodData: eat
+    end
+
+    opt useItemRemaining == 0 && serverSide
+        ServerPlayer -> ServerPlayer: completeUsingItem
+        note across: eating on complete disabled
+        ServerPlayer -> ClientPlayer: send(ClientboundEntityEventPacket)
+
+        group finish on client
+            ClientPlayer -> ClientPlayer: completeUsingItem
+            ClientPlayer -> ItemStack: finishUsingItem
+            ItemStack -> Item: finishUsingItem
+        end
+
+        ServerPlayer -> ItemStack: finishUsingItem
+        ItemStack -> Item: finishUsingItem
+    end
+end
+
+@enduml

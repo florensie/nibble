@@ -19,6 +19,13 @@ repositories {
 			includeGroup "curse.maven"
 		}
 	}
+	// Leave this as lowest priority
+	maven {
+		url = "https://jitpack.io"
+		content {
+			includeGroupByRegex "com.github.*"
+		}
+	}
 }
 
 dependencies {
@@ -26,6 +33,7 @@ dependencies {
 	mappings loom.officialMojangMappings()
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	include implementation(annotationProcessor("com.github.LlamaLad7:MixinExtras:${project.mixin_extras_version}"))
 
 	// Dev runtime
 	modRuntimeOnly "curse.maven:appleskin-248787:${project.appleskin_version}"

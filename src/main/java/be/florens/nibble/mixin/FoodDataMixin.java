@@ -19,16 +19,15 @@ public abstract class FoodDataMixin implements FoodDataExtension {
 
     @Unique
     @Override
-    public void eatOnlyNutrition(int nutrition) {
+    public void nibble$eatOnlyNutrition(int nutrition) {
         this.foodLevel = Math.min(nutrition + this.foodLevel, 20);
     }
 
     @Unique
     @Override
-    public void eatOnlySaturation(Item item) {
+    public void nibble$eatOnlySaturation(Item item) {
         if (item.isEdible()) {
-            FoodProperties foodProperties = Objects.requireNonNull(item.getFoodProperties(),
-                    "Edible item should always have FoodProperties");
+            FoodProperties foodProperties = Objects.requireNonNull(item.getFoodProperties());
             int nutrition = foodProperties.getNutrition();
             float saturationModifier = foodProperties.getSaturationModifier();
 

@@ -33,7 +33,7 @@ public abstract class PlayerMixin extends LivingEntity {
      */
     @Overwrite
     public ItemStack eat(Level level, ItemStack itemStack) {
-        this.getFoodData().eatOnlySaturation(itemStack.getItem());
+        this.getFoodData().nibble$eatOnlySaturation(itemStack.getItem());
         this.awardStat(Stats.ITEM_USED.get(itemStack.getItem()));
         level.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.PLAYER_BURP, SoundSource.PLAYERS, 0.5F, level.random.nextFloat() * 0.1F + 0.9F);
 
