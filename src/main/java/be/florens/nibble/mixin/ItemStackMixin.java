@@ -4,6 +4,7 @@ import be.florens.nibble.Nibble;
 import be.florens.nibble.extension.ItemStackExtension;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -66,8 +67,9 @@ public abstract class ItemStackMixin implements ItemStackExtension {
 
     @Unique
     @Override
-    public void nibble$shrinkNutritionRemaining(int nutrition) {
+    public void nibble$nibbleFood(Player player, int nutrition) {
         if (this.isEdible()) {
+            player.getFoodData().nibble$eatOnlyNutrition(nutrition);
             this.nutritionRemaining -= nutrition;
         }
     }

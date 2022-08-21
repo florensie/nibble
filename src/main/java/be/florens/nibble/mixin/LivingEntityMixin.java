@@ -1,8 +1,6 @@
 package be.florens.nibble.mixin;
 
 import be.florens.nibble.NibbleNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -39,9 +37,8 @@ public abstract class LivingEntityMixin extends Entity {
             int elapsedUseTicks = this.useDuration - this.getUseItemRemainingTicks() + 1;
             int nutrition = (int) (this.nutritionPerTick * elapsedUseTicks) - this.appliedNutrition;
             if (nutrition > 0) {
-                player.getFoodData().nibble$eatOnlyNutrition(nutrition);
                 this.appliedNutrition += nutrition;
-                itemStack.nibble$shrinkNutritionRemaining(nutrition);
+                itemStack.nibble$nibbleFood(player, nutrition);
                 NibbleNetworking.sendNibblePacket(player, nutrition);
             }
         }

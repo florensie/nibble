@@ -1,6 +1,6 @@
 package be.florens.nibble.extension;
 
-import org.spongepowered.asm.mixin.Unique;
+import net.minecraft.world.entity.player.Player;
 
 public interface ItemStackExtension {
 
@@ -20,7 +20,7 @@ public interface ItemStackExtension {
         throw new IllegalStateException("Extension not implemented by mixin");
     }
 
-    default void nibble$shrinkNutritionRemaining(int nutrition) {
+    default void nibble$nibbleFood(Player player, int nutrition) {
         throw new IllegalStateException("Extension not implemented by mixin");
     }
 

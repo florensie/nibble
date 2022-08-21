@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -35,11 +36,16 @@ public class NibbleNetworking implements ClientModInitializer {
         int nutrition = buf.readInt();
 
         client.execute(() -> {
-            if (client.player == null) {
+            LocalPlayer player = client.player;
+            if (player == null) {
                 Nibble.LOGGER.warn("Received nibble packet but player is not available!");
+                return;
             }
 
-            client.player.getFoodData().nibble$eatOnlyNutrition(nutrition);
+            player.getFoodData().nibble$eatOnlyNutrition(nutrition);
+            if (!player.getUseItem().isEmpty() && player.isUsingItem() && player.getUseItem().isEdible()) {
+                player.getUseItem().nibble$nibbleFood(player, nutrition);
+            }
         });
     }
 }
