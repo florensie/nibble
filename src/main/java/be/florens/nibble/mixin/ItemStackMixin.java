@@ -1,116 +1,56 @@
 package be.florens.nibble.mixin;
 
-import be.florens.nibble.Nibble;
-import be.florens.nibble.extension.ItemStackExtension;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.food.FoodProperties;
+import net.minecraft.core.component.DataComponentHolder;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ItemLike;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import java.util.Objects;
 
 @Mixin(ItemStack.class)
-public abstract class ItemStackMixin implements ItemStackExtension {
-
-    @Unique private int nutritionRemaining;
-    @Unique private boolean originalUseDuration;
-
-    @Shadow public abstract boolean isEdible();
-    @Shadow public abstract Item getItem();
-
-    @Shadow @Final @Deprecated private Item item;
-
-    @Shadow public abstract int getUseDuration();
+public abstract class ItemStackMixin implements DataComponentHolder {
 
     @Unique
-    @Override
-    public int nibble$getNutritionRemaining() {
-        return this.isEdible() ? nutritionRemaining : 0;
+    private static final int FOOD_BAR_COLOR = ARGB.color(147, 73, 5);
+
+    @Shadow
+    public abstract Item getItem();
+
+    @ModifyReturnValue(method = "isBarVisible", at = @At("RETURN"))
+    private boolean isBarVisible(boolean original) {
+        return original || isFood();
     }
 
-    @Unique
-    @Override
-    public boolean nibble$isFoodBarVisible() {
-        return this.isEdible() && nutritionRemaining < Objects.requireNonNull(this.getItem().getFoodProperties()).getNutrition();
-    }
-
-    @Unique
-    @Override
-    public int nibble$getFoodBarHeight() {
-        if (!this.isEdible()) {
-            return 13;
+    @ModifyReturnValue(method = "getBarWidth", at = @At("RETURN"))
+    private int getBarWidth(int original) {
+        if (isNonFoodBarVisible() || !isFood()) {
+            return original;
         }
 
-        FoodProperties foodProperties = Objects.requireNonNull(this.getItem().getFoodProperties());
-        return (int)((float) nutritionRemaining / foodProperties.getNutrition()) * 13;
+        return 0; // TODO
     }
 
-    @Unique
-    @Override
-    public void nibble$resetNutritionRemaining() {
-        if (this.isEdible()) {
-            FoodProperties foodProperties = Objects.requireNonNull(this.getItem().getFoodProperties());
-            this.nutritionRemaining = foodProperties.getNutrition();
+    @ModifyReturnValue(method = "getBarColor", at = @At("RETURN"))
+    private int getBarColor(int original) {
+        if (isNonFoodBarVisible() || !isFood()) {
+            return original;
         }
+
+        return FOOD_BAR_COLOR;
+    }
+
+    /// Returns the original result of [ItemStack#isBarVisible()]
+    @Unique
+    private boolean isNonFoodBarVisible() {
+        return this.getItem().isBarVisible((ItemStack) (Object) this);
     }
 
     @Unique
-    @Override
-    public void nibble$nibbleFood(Player player, int nutrition) {
-        if (this.isEdible()) {
-            player.getFoodData().nibble$eatOnlyNutrition(nutrition);
-            this.nutritionRemaining -= nutrition;
-        }
-    }
-
-    @Unique
-    @Override
-    // TODO: we might not need this anymore
-    public int nibble$getOriginalUseDuration() {
-        this.originalUseDuration = true;
-        return this.getUseDuration();
-    }
-
-    @ModifyReturnValue(method = "getUseDuration", at = @At("RETURN"))
-    private int adjustUseDurationForNibbled(int useDuration) {
-        if (this.originalUseDuration) {
-            this.originalUseDuration = false;
-        } else if(this.isEdible()) {
-            FoodProperties foodProperties = Objects.requireNonNull(this.getItem().getFoodProperties());
-            useDuration *= (double) nutritionRemaining / foodProperties.getNutrition();
-        }
-
-        return useDuration;
-    }
-
-    @Inject(method = "<init>(Lnet/minecraft/world/level/ItemLike;I)V", at = @At("RETURN"))
-    private void initNutritionRemaining(ItemLike itemLike, int i, CallbackInfo ci) {
-        if (this.item != null && this.item.isEdible()) {
-            FoodProperties foodProperties = Objects.requireNonNull(this.item.getFoodProperties());
-            this.nutritionRemaining = foodProperties.getNutrition();
-        }
-    }
-
-    @Inject(method = "<init>(Lnet/minecraft/nbt/CompoundTag;)V", at = @At("RETURN"))
-    private void initNutritionRemaining(CompoundTag compoundTag, CallbackInfo ci) {
-        if (this.item != null && this.item.isEdible()) {
-            this.nutritionRemaining = compoundTag.getInt("NutritionRemaining");
-        }
-    }
-
-    @Inject(method = "save", at = @At("HEAD"))
-    private void saveNutritionRemaining(CompoundTag compoundTag, CallbackInfoReturnable<CompoundTag> cir) {
-        compoundTag.putInt("NutritionRemaining", nutritionRemaining);
+    private boolean isFood() {
+        return this.has(DataComponents.FOOD);
     }
 }

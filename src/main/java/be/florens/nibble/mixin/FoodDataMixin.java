@@ -1,14 +1,13 @@
 package be.florens.nibble.mixin;
 
 import be.florens.nibble.extension.FoodDataExtension;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.food.FoodProperties;
-import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-
-import java.util.Objects;
 
 @Mixin(FoodData.class)
 public abstract class FoodDataMixin implements FoodDataExtension {
@@ -20,18 +19,16 @@ public abstract class FoodDataMixin implements FoodDataExtension {
     @Unique
     @Override
     public void nibble$eatOnlyNutrition(int nutrition) {
-        this.foodLevel = Math.min(nutrition + this.foodLevel, 20);
+        this.foodLevel = Math.min(this.foodLevel + nutrition, 20);
     }
 
-    @Unique
-    @Override
-    public void nibble$eatOnlySaturation(Item item) {
-        if (item.isEdible()) {
-            FoodProperties foodProperties = Objects.requireNonNull(item.getFoodProperties());
-            int nutrition = foodProperties.getNutrition();
-            float saturationModifier = foodProperties.getSaturationModifier();
-
-            this.saturationLevel = Math.min(this.saturationLevel + (float)nutrition * saturationModifier * 2.0F, (float)this.foodLevel);
-        }
-    }
+//    @Unique
+//    @Override
+//    public void nibble$eatOnlySaturation(ItemStack itemStack) {
+//        FoodProperties food = itemStack.get(DataComponents.FOOD);
+//        if (food != null) {
+//            float saturation = food.saturation();
+//            this.saturationLevel = Math.min(this.saturationLevel + saturation, (float)this.foodLevel);
+//        }
+//    }
 }

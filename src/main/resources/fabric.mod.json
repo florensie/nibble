@@ -17,26 +17,15 @@
 
   "environment": "*",
   "entrypoints": {
-    "main": ["be.florens.nibble.Nibble"],
-    "preLaunch": ["be.florens.nibble.NibblePreLaunch"],
-    "client": [
-      "be.florens.nibble.NibbleNetworking"
-    ]
+    "main": ["be.florens.nibble.Nibble"]
   },
   "mixins": [
     "nibble.mixins.json"
   ],
-  "custom": {
-    "loom:injected_interfaces": {
-      "net/minecraft/class_1702": ["be/florens/nibble/extension/FoodDataExtension"],
-      "net/minecraft/class_1799": ["be/florens/nibble/extension/ItemStackExtension"]
-    }
-  },
 
   "depends": {
-    "fabricloader": ">=0.14.6",
-    "fabric": "*",
-    "minecraft": "~1.19",
-    "java": ">=17"
+    "fabricloader": ">=0.18.4",
+    "minecraft": "*",
+    "java": ">=25"
   }
 }
